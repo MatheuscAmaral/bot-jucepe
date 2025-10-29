@@ -1,0 +1,11 @@
+{
+  "file_url": "https://example.com/file.pdf",
+  "enterprise_id": 415,
+  "logs": {
+    "status": "completed",
+    "protocol_number": "PEP2023123456789",
+    "processing_time": "2.5s",
+    "bot_response": "Processo finalizado com sucesso",
+    "attempts": 1
+  }
+} 
