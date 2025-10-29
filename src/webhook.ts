@@ -102,16 +102,38 @@ fastify.post<{ Body: WebhookViabilityRequest }>(
         state: requestData.state,
       });
 
-      const responseData = {
-        success: true,
-        message: "Solicitação recebida e será processada",
-        timestamp: new Date().toISOString(),
-        estimatedTime: "5-10 minutos",
-      };
+      // Na Vercel, processar sincronamente porque a função termina após a resposta
+      if (process.env.VERCEL === "1") {
+        logger.info("Processando em modo Vercel (síncrono)...");
+        
+        const result = await runViabilityBot(requestData);
+        
+        if (result.success) {
+          logger.info(`Viabilidade concluída com sucesso:`, result);
+        } else {
+          logger.error(`Viabilidade falhou:`, result);
+        }
 
-      reply.status(202).send(responseData);
+        await notifyObviaSystem(result);
 
-      processViabilityRequest(requestData);
+        return reply.status(200).send({
+          success: result.success,
+          message: result.success ? "Viabilidade processada com sucesso" : "Falha no processamento",
+          result: result,
+        });
+      } else {
+        // Em ambiente local, processar em background
+        const responseData = {
+          success: true,
+          message: "Solicitação recebida e será processada",
+          timestamp: new Date().toISOString(),
+          estimatedTime: "5-10 minutos",
+        };
+
+        reply.status(202).send(responseData);
+
+        processViabilityRequest(requestData);
+      }
     } catch (error) {
       logger.error(`Erro no webhook: ${error}`);
       return reply.status(500).send({
