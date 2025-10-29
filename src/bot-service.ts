@@ -23,8 +23,8 @@ if (isVercel) {
   puppeteer = require("puppeteer-core");
   chromium = require("@sparticuz/chromium");
   
-  // Configurar o Chromium para Vercel
-  chromium.setGraphicsMode(false);
+  // Configurar o Chromium para Vercel (versão nova não usa setGraphicsMode)
+  // chromium.setGraphicsMode(false); // Removido - não existe nesta versão
 } else {
   // Em desenvolvimento/local, usar puppeteer normal
   puppeteer = require("puppeteer");
