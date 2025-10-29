@@ -230,22 +230,25 @@ fastify.setErrorHandler(
   }
 );
 
-const start = async () => {
-  try {
-    await fastify.listen({
-      port: Number(PORT),
-      host: "0.0.0.0",
-    });
+// Só inicia o servidor se não estiver em ambiente serverless (Vercel)
+if (process.env.VERCEL !== "1") {
+  const start = async () => {
+    try {
+      await fastify.listen({
+        port: Number(PORT),
+        host: "0.0.0.0",
+      });
 
-    logger.info(`🚀 Webhook JUCEPE (Fastify) rodando na porta ${PORT}`);
-    logger.info(`📋 Health check: http://localhost:${PORT}/health`);
-    logger.info(`🔗 Webhook URL: http://localhost:${PORT}/webhook/viability`);
-  } catch (err) {
-    logger.error("Erro ao iniciar o servidor:", err);
-    process.exit(1);
-  }
-};
+      logger.info(`🚀 Webhook JUCEPE (Fastify) rodando na porta ${PORT}`);
+      logger.info(`📋 Health check: http://localhost:${PORT}/health`);
+      logger.info(`🔗 Webhook URL: http://localhost:${PORT}/webhook/viability`);
+    } catch (err) {
+      logger.error("Erro ao iniciar o servidor:", err);
+      process.exit(1);
+    }
+  };
 
-start();
+  start();
+}
 
 export default fastify;
