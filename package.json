@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node src/webhook.ts",
-    "build": "tsc",
+    "build": "tsc && mkdir -p public && touch public/.gitkeep",
     "webhook": "ts-node src/webhook.ts"
   },
   "keywords": [],
