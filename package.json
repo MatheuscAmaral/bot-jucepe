@@ -22,11 +22,13 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.893.0",
     "@fastify/cors": "^9.0.1",
+    "@sparticuz/chromium": "^141.0.0",
     "dotenv": "^17.2.2",
     "fastify": "^4.29.1",
     "logform": "2.6.0",
     "node-fetch": "^2.7.0",
     "puppeteer": "24.17.1",
+    "puppeteer-core": "^24.27.0",
     "uuid": "^8.3.2",
     "winston": "3.17.0"
   },

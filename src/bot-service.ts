@@ -1,4 +1,3 @@
-import puppeteer from "puppeteer";
 import logger from "./utils/Logger";
 import type { WebhookViabilityRequest, BotResult } from "./types/webhook";
 import type { ViabilityRequester } from "./types/IViabilityRequester";
@@ -11,6 +10,25 @@ import {
   SYSTEM_URLS,
   validateRequiredEnvVars,
 } from "../config/env";
+
+// Detectar se está rodando na Vercel ou outro ambiente serverless
+const isVercel = process.env.VERCEL === "1" || process.env.VERCEL_ENV !== undefined;
+
+// Importar Puppeteer baseado no ambiente
+let puppeteer: any;
+let chromium: any;
+
+if (isVercel) {
+  // Na Vercel, usar puppeteer-core com @sparticuz/chromium
+  puppeteer = require("puppeteer-core");
+  chromium = require("@sparticuz/chromium");
+  
+  // Configurar o Chromium para Vercel
+  chromium.setGraphicsMode(false);
+} else {
+  // Em desenvolvimento/local, usar puppeteer normal
+  puppeteer = require("puppeteer");
+}
 
 export async function runViabilityBot(
   webhookData: WebhookViabilityRequest
@@ -50,10 +68,9 @@ export async function runViabilityBot(
     let browser = null;
 
     try {
-      browser = await puppeteer.launch({
+      // Configuração base do Puppeteer
+      const puppeteerConfig: any = {
         headless: PUPPETEER_CONFIG.headless,
-        slowMo:
-          process.env.NODE_ENV === "production" ? 100 : PUPPETEER_CONFIG.slowMo, // Voltando à velocidade original
         defaultViewport: null,
         timeout: 60000, // Timeout maior para launch em máquinas lentas
         args: [
@@ -77,7 +94,23 @@ export async function runViabilityBot(
           "--disable-features=VizDisplayCompositor",
           "--single-process", // Para máquinas com recursos limitados
         ],
-      });
+      };
+
+      // Na Vercel, usar o executável do Chromium
+      if (isVercel && chromium) {
+        puppeteerConfig.executablePath = await chromium.executablePath();
+        // Adicionar args específicos do Chromium para Vercel
+        puppeteerConfig.args = [
+          ...puppeteerConfig.args,
+          ...chromium.args,
+        ];
+      } else {
+        // Em desenvolvimento, adicionar slowMo
+        puppeteerConfig.slowMo =
+          process.env.NODE_ENV === "production" ? 100 : PUPPETEER_CONFIG.slowMo;
+      }
+
+      browser = await puppeteer.launch(puppeteerConfig);
 
       logger.info(`Tentativa ${attempt} - Navegador iniciado via webhook`);
 
@@ -112,7 +145,7 @@ export async function runViabilityBot(
 
       // Interceptar e bloquear recursos desnecessários para melhor performance
       await page.setRequestInterception(true);
-      page.on("request", (req) => {
+      page.on("request", (req: any) => {
         const resourceType = req.resourceType();
         if (
           resourceType === "image" ||
@@ -126,7 +159,7 @@ export async function runViabilityBot(
       });
 
       // Adicionar listener para detectar navegações inesperadas
-      page.on("framenavigated", (frame) => {
+      page.on("framenavigated", (frame: any) => {
         if (frame === page.mainFrame()) {
           logger.info(`Navegação detectada para: ${frame.url()}`);
         }
