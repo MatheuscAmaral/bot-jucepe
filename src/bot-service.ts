@@ -99,17 +99,24 @@ export async function runViabilityBot(
       // Na Vercel, usar o executável do Chromium
       if (isVercel && chromium) {
         logger.info(`Configurando Chromium para Vercel...`);
-        puppeteerConfig.executablePath = await chromium.executablePath();
-        logger.info(`Chromium executable path: ${puppeteerConfig.executablePath}`);
-        
-        // Adicionar args específicos do Chromium para Vercel
-        const chromiumArgs = chromium.args || [];
-        logger.info(`Chromium args: ${JSON.stringify(chromiumArgs)}`);
-        
-        puppeteerConfig.args = [
-          ...puppeteerConfig.args,
-          ...chromiumArgs,
-        ];
+        try {
+          puppeteerConfig.executablePath = await chromium.executablePath();
+          logger.info(`Chromium executable path: ${puppeteerConfig.executablePath}`);
+          
+          // Adicionar args específicos do Chromium para Vercel
+          const chromiumArgs = chromium.args || [];
+          logger.info(`Chromium args count: ${chromiumArgs.length}`);
+          
+          puppeteerConfig.args = [
+            ...puppeteerConfig.args,
+            ...chromiumArgs,
+          ];
+          
+          logger.info(`Puppeteer args configured, total: ${puppeteerConfig.args.length}`);
+        } catch (error) {
+          logger.error(`Erro ao configurar Chromium: ${error}`);
+          throw error;
+        }
       } else {
         // Em desenvolvimento, adicionar slowMo
         puppeteerConfig.slowMo =
@@ -117,9 +124,15 @@ export async function runViabilityBot(
       }
 
       logger.info(`Lançando navegador Puppeteer...`);
-      logger.info(`Puppeteer config: ${JSON.stringify(puppeteerConfig)}`);
       
-      browser = await puppeteer.launch(puppeteerConfig);
+      try {
+        browser = await puppeteer.launch(puppeteerConfig);
+        logger.info(`Puppeteer launch successful!`);
+      } catch (error) {
+        logger.error(`Erro ao lançar Puppeteer: ${error}`);
+        logger.error(`Erro stack: ${error instanceof Error ? error.stack : 'No stack'}`);
+        throw error;
+      }
 
       logger.info(`Tentativa ${attempt} - Navegador iniciado via webhook`);
 
