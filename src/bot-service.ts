@@ -98,11 +98,17 @@ export async function runViabilityBot(
 
       // Na Vercel, usar o executável do Chromium
       if (isVercel && chromium) {
+        logger.info(`Configurando Chromium para Vercel...`);
         puppeteerConfig.executablePath = await chromium.executablePath();
+        logger.info(`Chromium executable path: ${puppeteerConfig.executablePath}`);
+        
         // Adicionar args específicos do Chromium para Vercel
+        const chromiumArgs = chromium.args || [];
+        logger.info(`Chromium args: ${JSON.stringify(chromiumArgs)}`);
+        
         puppeteerConfig.args = [
           ...puppeteerConfig.args,
-          ...chromium.args,
+          ...chromiumArgs,
         ];
       } else {
         // Em desenvolvimento, adicionar slowMo
@@ -110,6 +116,9 @@ export async function runViabilityBot(
           process.env.NODE_ENV === "production" ? 100 : PUPPETEER_CONFIG.slowMo;
       }
 
+      logger.info(`Lançando navegador Puppeteer...`);
+      logger.info(`Puppeteer config: ${JSON.stringify(puppeteerConfig)}`);
+      
       browser = await puppeteer.launch(puppeteerConfig);
 
       logger.info(`Tentativa ${attempt} - Navegador iniciado via webhook`);
