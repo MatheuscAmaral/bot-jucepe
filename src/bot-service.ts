@@ -99,9 +99,20 @@ export async function runViabilityBot(
       // Na Vercel, usar o executável do Chromium
       if (isVercel && chromium) {
         logger.info(`Configurando Chromium para Vercel...`);
+        logger.info(`Chromium object: ${typeof chromium}`);
+        logger.info(`Chromium methods: ${Object.keys(chromium).join(', ')}`);
+        
         try {
-          puppeteerConfig.executablePath = await chromium.executablePath();
-          logger.info(`Chromium executable path: ${puppeteerConfig.executablePath}`);
+          logger.info(`Chamando chromium.executablePath()...`);
+          const executablePath = chromium.executablePath ? await chromium.executablePath() : null;
+          logger.info(`Executable path recebido: ${executablePath}`);
+          
+          if (executablePath) {
+            puppeteerConfig.executablePath = executablePath;
+            logger.info(`Chromium executable path definido: ${puppeteerConfig.executablePath}`);
+          } else {
+            logger.error(`chromium.executablePath() retornou null ou undefined`);
+          }
           
           // Adicionar args específicos do Chromium para Vercel
           const chromiumArgs = chromium.args || [];
@@ -115,6 +126,8 @@ export async function runViabilityBot(
           logger.info(`Puppeteer args configured, total: ${puppeteerConfig.args.length}`);
         } catch (error) {
           logger.error(`Erro ao configurar Chromium: ${error}`);
+          logger.error(`Error type: ${typeof error}`);
+          logger.error(`Error message: ${error instanceof Error ? error.message : String(error)}`);
           throw error;
         }
       } else {
